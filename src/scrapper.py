@@ -34,7 +34,7 @@ def get_homepage_as_dict():
         
         reviews.append({
             "genre": genre,
-            "review_url": review_url,
+            "url": review_url,
             "rating": rating,
             "band": band,
             "album": album,
@@ -54,14 +54,49 @@ def get_homepage_as_dict():
         images = decode_srcset_str(child.a.img[src])
 
         news.append({
-            "news_url": news_url,
+            "url": news_url,
             "subject": subject,
             "headline": headline,
             "text": text,
             "images": images
         })
 
+    item_box = soup.select_one("div.row:nth-child(3)").find_all("div", attrs={"class": "small"})
+    galleries = []
+    for child in item_box:
+        gallery_url = child.a["href"]
+        label = child.a.div.string
+
+        src = "srcset" if child.a.img.has_attr("srcset") else "data-srcset"
+        images = decode_srcset_str(child.a.img[src])
+
+        galleries.append({
+            "url": gallery_url,
+            "label": label,
+            "images": images
+        })
+
+    item_box = soup.select_one("div.col-xs-12:nth-child(2)").find_all("tr", attrs={"class": "presents"})
+    tour_dates = []
+    for child in item_box:
+        date = child.find("td", attrs={"class": "concert-date"}).span["content"]
+        info = child.find("td", attrs={"itemprop": "name"})
+        date_url = info.a["href"]
+        band = info.a.text
+        location = info.text
+
+        tour_dates.append({
+            "url": date_url,
+            "date": date,
+            "band": band,
+            "location": location
+        })
+
     return {
         "reviews": reviews,
-        "news": news
+        "news": news,
+        "galleries": galleries,
+        "tour_dates": tour_dates
     }
+
+get_homepage_as_dict()
