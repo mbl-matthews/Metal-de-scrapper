@@ -17,8 +17,24 @@ def get_homepage_as_dict():
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "lxml")
 
-    item_box = soup.find_all("div", attrs={"class": "swiper-slide item"})
+    item_box = soup.select_one(".highlight").find_all("a", {"class": "swiper-slide"})
+    highlights = []
+    for child in item_box:
+        highlight_url = child["href"]
+        info = child.div
+        data_src = info.picture.img["data-src"]
+        title = info.div.strong.text
+        text = info.div.p.text
 
+        highlights.append({
+            "url": highlight_url,
+            "data_src": data_src,
+            "title": title,
+            "text": text
+        })
+
+
+    item_box = soup.find_all("div", attrs={"class": "swiper-slide item"})
     reviews = []
     for child in item_box:
         if "more-reviews" in child.div["class"]:
@@ -92,11 +108,77 @@ def get_homepage_as_dict():
             "location": location
         })
 
+    specials = []
+    item_box = soup.select_one("div.row:nth-child(6)").find_all("div", attrs={"class": "teaser"})
+    for child in item_box:
+        special_url = child.a["href"]
+        info = child.a.div
+        title = info.strong.text
+        headline = ""
+        try:
+            headline = info.select_one("span.teaser-headline").text
+        except:
+            pass
+        text = info.select_one("p.teaser-text").text
+
+        src = "srcset" if child.img.has_attr("srcset") else "data-srcset"
+        images = decode_srcset_str(child.img[src])
+
+        specials.append({
+            "url": special_url,
+            "title": title,
+            "text": text,
+            "images": images
+        })
+
+    interviews = []
+    item_box = soup.select_one("div.row:nth-child(7)").find_all("div", attrs={"class": "teaser"})
+    for child in item_box:
+        special_url = child.a["href"]
+        info = child.a.div
+        title = info.strong.text
+        headline = ""
+        try:
+            headline = info.select_one("span.teaser-headline").text
+        except:
+            pass
+        text = info.select_one("p.teaser-text").text
+
+        src = "srcset" if child.img.has_attr("srcset") else "data-srcset"
+        images = decode_srcset_str(child.img[src])
+
+        specials.append({
+            "url": special_url,
+            "title": title,
+            "text": text,
+            "images": images
+        })
+
+    presents = []
+    item_box = soup.select_one("div.row:nth-child(8)").find_all("div", attrs={"class": "swiper-slide"})
+    for child in item_box:
+        if "more" in child.div["class"]:
+            continue
+
+        presents_url = child.a["href"]
+        image = child.a.img["src"]
+        title = child.a.div.strong
+
+        presents.append({
+            "url": presents_url,
+            "title": title,
+            "image": image
+        })
+
     return {
+        "highlights": highlights,
         "reviews": reviews,
         "news": news,
         "galleries": galleries,
-        "tour_dates": tour_dates
+        "tour_dates": tour_dates,
+        "specials": specials,
+        "interviews": interviews,
+        "presents": presents
     }
 
 get_homepage_as_dict()
